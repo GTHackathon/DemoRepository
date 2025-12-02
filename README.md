@@ -1,69 +1,106 @@
-# 🚀 TrendSpotter: The Automated Insight Engine
-
-![Project Banner](https://workable-application-form.s3.us-east-1.amazonaws.com/advanced/production/67ee681e80c99af9453ef9e1/c83c8c79-10fd-9da0-bae2-daf435c0877c)
+🚀 TrendSpotter: The Automated Insight Engine
+=============================================
 
 > **Tagline:** An event-driven data pipeline that converts raw CSV logs into executive-ready PDF reports with AI-generated narratives in under 30 seconds.
 
----
+1\. The Problem (Real World Scenario)
+-------------------------------------
 
-## 1. Problem Statement
-**The Challenge:**
-Marketing Account Managers currently spend 4-6 hours per week manually stitching together data from SQL and Excel to create "Weekly Performance Reports." This latency means clients often miss critical drops in Cost-Per-Visit (CPV) until it is too late to adjust the budget.
+**Context:** During my research into AdTech workflows, I identified a major inefficiency: Account Managers waste 4-6 hours every week manually downloading CSVs and taking screenshots to create "Weekly Performance Reports."
 
-**Our Solution:**
-We built **TrendSpotter**, a zero-touch pipeline. As soon as raw campaign data hits our system, it is processed, analyzed for statistical anomalies, and summarized into a natural language report distributed via Slack and Email.
+**The Pain Point:** This manual process is slow, boring, and error-prone. If a campaign is wasting budget, the client might not know for days because the reporting lag is too high.
 
-## 2. Expected End Result
+> **My Solution:** I built **TrendSpotter**, an event-driven system. You simply drop a raw file into a folder, and 30 seconds later, you receive a fully analyzed, executive-ready PDF report in your email.
+
+2\. Expected End Result
+-----------------------
+
 **For the User:**
-* **Input:** Drop a raw CSV file into the folder.
-* **Action:** Wait 30 seconds.
-* **Output:** Receive a professionally formatted PDF via email containing:
-    * Week-over-Week growth charts.
-    * A list of detected anomalies (e.g., "Traffic dropped 40% in Miami").
-    * An AI-written paragraph explaining *why* the drop happened (correlated with Weather API).
 
-## 3. Technical Approach
-We avoided simple "wrapper" logic and built a robust **ETL (Extract, Transform, Load)** pipeline.
+*   **Input:** Drop a raw CSV file into the folder.
+    
+*   **Action:** Wait 30 seconds.
+    
+*   **Output:** Receive a professionally formatted PDF via email containing:
+    
+    *   Week-over-Week growth charts.
+        
+    *   A list of detected anomalies (e.g., "Traffic dropped 40% in Miami").
+        
+    *   An AI-written paragraph explaining _why_ the drop happened (correlated with Weather API).
+        
+
+3\. Technical Approach
+----------------------
+
+I wanted to challenge myself to build a system that is **Production-Ready**, moving beyond simple scripts to a robust **ETL (Extract, Transform, Load)** pipeline.
 
 **System Architecture:**
-1.  **Ingestion (Event-Driven):** A Python `watchdog` script listens for file changes.
-2.  **Processing (High Performance):** We use **Polars** (instead of Pandas) to clean and aggregate data 10x faster.
-3.  **Anomaly Detection:** We implemented the **Isolation Forest** algorithm (Scikit-Learn) to mathematically identify outliers in foot traffic data.
+
+1.  **Ingestion (Event-Driven):** A Python watchdog script listens for file changes in real-time.
+    
+2.  **Decision:** I chose **Polars over Pandas** because it handles larger datasets faster and enforces a stricter schema, which reduces bugs in production.
+    
+3.  **Anomaly Detection:** I implemented the **Isolation Forest** algorithm (Scikit-Learn) to mathematically identify "weird" data points (outliers) rather than just using hard-coded if/else rules.
+    
 4.  **Generative AI (The Analyst):**
-    * We pass the anomaly metadata to **Google Gemini 1.5 Pro**.
-    * We use a **Few-Shot Prompt** technique to force the AI to sound like a Senior Data Analyst.
-    * *Guardrail:* We validate the AI's math against the Polars dataframe to prevent hallucinations.
-5.  **Reporting:** `WeasyPrint` renders the final HTML/CSS report into a pixel-perfect PDF.
+    
+    *   We pass the anomaly metadata to **Google Gemini 1.5 Pro**.
+        
+    *   We use a **Few-Shot Prompt** technique to force the AI to sound like a Senior Data Analyst.
+        
+    *   _Guardrail:_ I implemented a validation step to ensure the AI's math matches the Polars dataframe to prevent hallucinations.
+        
+5.  **Reporting:** WeasyPrint renders the final HTML/CSS report into a pixel-perfect PDF.
+    
 
+4\. Tech Stack
+--------------
 
+*   **Language:** Python 3.11
+    
+*   **Data Engine:** Polars (Rust-based DataFrame library)
+    
+*   **Machine Learning:** Scikit-Learn (Isolation Forest)
+    
+*   **AI Model:** Google Gemini 1.5 Pro (via Vertex AI)
+    
+*   **Orchestration:** Docker & Docker Compose
+    
+*   **Visualization:** Plotly & WeasyPrint
+    
 
-[Image of System Architecture Diagram showing Data Flow]
+5\. Challenges & Learnings
+--------------------------
 
+_This project wasn't easy. Here are two major hurdles I overcame:_
 
-## 4. Tech Stack
-* **Language:** Python 3.11
-* **Data Engine:** Polars (Rust-based DataFrame library)
-* **Machine Learning:** Scikit-Learn (Isolation Forest)
-* **AI Model:** Google Gemini 1.5 Pro (via Vertex AI)
-* **Orchestration:** Docker & Docker Compose
-* **Visualization:** Plotly & WeasyPrint
+**Challenge 1: AI Hallucinations**
 
-## 5. Visual Proof
-| **Anomaly Detected (Terminal)** | **Final Report (PDF)** |
-| :---: | :---: |
-| ![Terminal](https://via.placeholder.com/400x300?text=Isolation+Forest+Output) | ![PDF](https://via.placeholder.com/400x300?text=Executive+PDF+Report) |
+*   **Issue:** Initially, the AI would invent reasons for data drops (e.g., claiming "It rained" when I provided no weather data).
+    
+*   **Solution:** I implemented a **"Strict Context" System Prompt**. I effectively told the AI: _"Only use the data provided in the JSON context. If you don't know, say 'Unknown'."_ This reduced hallucination rates significantly.
+    
 
-## 6. How to Run
-```bash
-# 1. Clone Repository
-git clone [https://github.com/username/trendspotter.git](https://github.com/username/trendspotter.git)
+**Challenge 2: Docker Networking**
 
-# 2. Add API Key
-export GEMINI_API_KEY="your_key_here"
+*   **Issue:** My Python container couldn't send emails out to the SMTP server.
+    
+*   **Solution:** I learned about Docker Networks and container isolation. I had to configure the SMTP ports and environment variables correctly in the docker-compose.yml to allow external traffic.
+    
 
-# 3. Build & Run Container
-docker-compose up --build
+6\. Visual Proof
+----------------
 
-# 4. Test
-# Move the sample.csv to the input folder to trigger the pipeline
-mv data/sample.csv data/input/
+**Anomaly Detected (Terminal)**
+
+**Final Report (PDF)**
+
+_Terminal showing Isolation Forest detecting outliers_
+
+_Final Output sent to client via Email_
+
+7\. How to Run
+--------------
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # 1. Clone Repository  git clone [https://github.com/username/trendspotter.git](https://github.com/username/trendspotter.git)  # 2. Add API Key  export GEMINI_API_KEY="your_key_here"  # 3. Build & Run Container  docker-compose up --build  # 4. Test  # Move the sample.csv to the input folder to trigger the pipeline  mv data/sample.csv data/input/   `
